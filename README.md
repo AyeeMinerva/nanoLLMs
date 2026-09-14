@@ -1,3 +1,7 @@
+## Currently Working On
+ 
+Reading and reproducing the nanoGPT source code.
+
 ## Acknowledgements & References
 
 > ⚠️ **Disclaimer**: This repository is created **strictly for personal study, hands-on learning, and educational purposes**.
