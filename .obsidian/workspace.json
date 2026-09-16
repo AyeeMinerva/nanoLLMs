@@ -4,37 +4,20 @@
     "type": "split",
     "children": [
       {
-        "id": "c4627a893d5d5e76",
+        "id": "57b8b8bfa4784e20",
         "type": "tabs",
         "children": [
           {
-            "id": "2a48354932bceb5c",
+            "id": "eb323abddee8425c",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "references/nanoGPT/model.py.read.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "model.py.read"
-            }
-          },
-          {
-            "id": "8be66395624f3df0",
-            "type": "leaf",
-            "state": {
-              "type": "excalidraw",
-              "state": {
-                "file": "Excalidraw/Drawing 2026-09-16 15.08.42.excalidraw.md"
-              },
-              "icon": "excalidraw-icon",
-              "title": "Drawing 2026-09-16 15.08.42.excalidraw"
+              "title": "新标签页"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -193,17 +176,17 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "obsidian-excalidraw-plugin:新建绘图文件": false,
       "switcher:打开快速切换": false,
       "graph:查看关系图谱": false,
       "canvas:新建白板": false,
       "daily-notes:打开/创建今天的日记": false,
       "templates:插入模板": false,
       "command-palette:打开命令面板": false,
-      "bases:新建数据库": false
+      "bases:新建数据库": false,
+      "obsidian-excalidraw-plugin:新建绘图文件": false
     }
   },
-  "active": "8be66395624f3df0",
+  "active": "eb323abddee8425c",
   "lastOpenFiles": [
     "references/nanoGPT/model.py.read.md",
     "Excalidraw/Drawing 2026-09-16 15.08.42.excalidraw.md",
