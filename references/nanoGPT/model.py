@@ -98,18 +98,20 @@ class CausalSelfAttention(nn.Module):
 
         # output projection
         # 1. 通过线性变换c_proj将注意力输出映射回原始的嵌入维度
-        # 2. 应用残差连接和dropout，增强模型的稳定性 （训练时随即丢弃，推理时不变）
+        # 2. 应用dropout，增强模型的稳定性 （训练时随即丢弃，推理时不变）
         y = self.resid_dropout(self.c_proj(y))
         return y
 
+#Multi-Layer Perceptron 多层感知机
 class MLP(nn.Module):
 
     def __init__(self, config):
         super().__init__()
-        self.c_fc    = nn.Linear(config.n_embd, 4 * config.n_embd, bias=config.bias)
-        self.gelu    = nn.GELU()
-        self.c_proj  = nn.Linear(4 * config.n_embd, config.n_embd, bias=config.bias)
-        self.dropout = nn.Dropout(config.dropout)
+        #先升维到四倍，经过GELU激活函数，再降维回原来的嵌入维度
+        self.c_fc    = nn.Linear(config.n_embd, 4 * config.n_embd, bias=config.bias)    #Fully Connected / 全连接层
+        self.gelu    = nn.GELU()                                                        #
+        self.c_proj  = nn.Linear(4 * config.n_embd, config.n_embd, bias=config.bias)    #Projection / 投影层
+        self.dropout = nn.Dropout(config.dropout)                                       #
 
     def forward(self, x):
         x = self.c_fc(x)
