@@ -4,17 +4,19 @@
     "type": "split",
     "children": [
       {
-        "id": "57b8b8bfa4784e20",
+        "id": "5623cfc77bbcddeb",
         "type": "tabs",
         "children": [
           {
-            "id": "eb323abddee8425c",
+            "id": "d1d155b9117589df",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
-              "icon": "lucide-file",
-              "title": "新标签页"
+              "type": "excalidraw",
+              "state": {
+                "file": "Excalidraw/Drawing 2026-09-16 15.08.42.excalidraw.md"
+              },
+              "icon": "excalidraw-icon",
+              "title": "Drawing 2026-09-16 15.08.42.excalidraw"
             }
           }
         ]
@@ -186,7 +188,7 @@
       "obsidian-excalidraw-plugin:新建绘图文件": false
     }
   },
-  "active": "eb323abddee8425c",
+  "active": "d1d155b9117589df",
   "lastOpenFiles": [
     "references/nanoGPT/model.py.read.md",
     "Excalidraw/Drawing 2026-09-16 15.08.42.excalidraw.md",
