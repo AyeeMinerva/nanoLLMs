@@ -15,6 +15,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+#torch>=2.1已经实现:norm = nn.LayerNorm(dim, bias=False)
 class LayerNorm(nn.Module):
     """ LayerNorm but with an optional bias. PyTorch doesn't support simply bias=False """
 
@@ -182,6 +183,9 @@ class GPT(nn.Module):
         For non-embedding count (default), the position embeddings get subtracted.
         The token embeddings would too, except due to the parameter sharing these
         params are actually used as weights in the final layer, so we include them.
+        返回模型中的参数数量。  
+        对于非嵌入计数（默认），会减去位置嵌入。  
+        标记嵌入本来也会被减去，但由于参数共享，这些参数实际上被用作最终层的权重，所以我们会把它们包括在内。
         """
         n_params = sum(p.numel() for p in self.parameters())
         if non_embedding:
@@ -221,10 +225,15 @@ class GPT(nn.Module):
 
         return logits, loss
 
+    #压缩上下文长度
     def crop_block_size(self, block_size):
+        #用于动态裁剪 Transformer 模型的最大上下文长度（block_size / sequence length）
         # model surgery to decrease the block size if necessary
         # e.g. we may load the GPT2 pretrained model checkpoint (block size 1024)
         # but want to use a smaller block size for some smaller, simpler model
+        # 模型手术（model surgery）：必要时减小块大小（block size，即上下文长度）
+        # 例如：加载 GPT-2 预训练模型检查点（block size 为 1024）
+        # 但对于某些更小、更简单的模型，希望使用较小的 block size
         assert block_size <= self.config.block_size
         self.config.block_size = block_size
         self.transformer.wpe.weight = nn.Parameter(self.transformer.wpe.weight[:block_size])
@@ -233,6 +242,7 @@ class GPT(nn.Module):
                 block.attn.bias = block.attn.bias[:,:,:block_size,:block_size]
 
     @classmethod
+    #导入官方权重
     def from_pretrained(cls, model_type, override_args=None):
         assert model_type in {'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl'}
         override_args = override_args or {} # default to empty dict
@@ -289,6 +299,7 @@ class GPT(nn.Module):
 
         return model
 
+    #配置精细化优化器
     def configure_optimizers(self, weight_decay, learning_rate, betas, device_type):
         # start with all of the candidate parameters
         param_dict = {pn: p for pn, p in self.named_parameters()}
@@ -315,6 +326,7 @@ class GPT(nn.Module):
 
         return optimizer
 
+    #算力摸底
     def estimate_mfu(self, fwdbwd_per_iter, dt):
         """ estimate model flops utilization (MFU) in units of A100 bfloat16 peak FLOPS """
         # first estimate the number of flops we do per iteration.
