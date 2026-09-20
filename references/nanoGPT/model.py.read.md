@@ -181,3 +181,33 @@ $$\mathbf{q}_m \cdot \mathbf{k}_n = (\mathbf{R}(m\theta)\mathbf{q})^T (\mathbf{R
 此外，RoPE 具备天然的**长程衰减特性**（距离越远，内积上界自然呈现衰减），且其线性的旋转性质使得大模型在后期进行上下文拓展（如通过 Position Interpolation、NTK-aware、YaRN 进行 32K/128K 扩窗）时极为简单且代价极低。因此，LLaMA、Qwen、DeepSeek、Mistral 等现代大语言模型几乎全量采用了该技术。
 
 ---
+
+> Q&A: **为什么写 self.transformer.wte.weight = self.lm_head.weight ? 而不是乘逆**
+
+nn.Embedding 本质上是一个查表器,相当于按索引直接从矩阵中抽取对应的行：
+`out = wte.weight[token_ids]`
+
+nn.Linear 在底层会执行矩阵乘法+自动转置, 执行的是公式：$$y = x W^T + b$$
+
+
+输入阶段是独热编码, 本质是从字典里取出第 $i$ 行的语义向量 $E_i$
+
+$$h_{\text{input}} = x_{\text{one-hot}} E = E_i \in \mathbb{R}^{1 \times d}$$
+
+输出阶段 模型输出的张量$h_{\text{final}}$是一个在语义空间里的向量, 此时应该找的就是词表中的哪个词的语义向量和$h_{\text{final}}$最接近
+
+衡量两个向量方向与强度的最直接方式就是点积
+
+$$\text{logit}_i = h_{\text{final}} \cdot E_i^T$$
+
+在 PyTorch 线性层中，Linear(in_features=d, out_features=|V|) 计算的公式正是 $y = x W^T$。若令 $W = E$，计算结果就是：$$\text{logits} = h_{\text{final}} E^T$$
+
+为什么不用求逆 $A^{-1}$？
+
+维度非方阵，不可求逆：嵌入矩阵 $E$ 的形状是 $\vert{}V\vert{} \times d$（例如 $50000 \times 768$）。
+
+- 行数和列数严重不对等，数学上根本不存在常规意义下的逆矩阵 $E^{-1}$。
+
+- 任务不是“还原”，而是“分类”：模型的最后一层是 Softmax 分类层：$$P(w_i) = \frac{\exp(\text{logit}_i)}{\sum_j \exp(\text{logit}_j)}$$Softmax 需要输入的是表示“相似倾向程度”的分数（logits），而不是精确还原原始 one-hot 的数值。
+
+---
