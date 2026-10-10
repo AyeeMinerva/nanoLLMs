@@ -1,0 +1,9 @@
+# Python 3.12 · CUDA 12.8 (RTX 50 系列需要 cu128)
+# pip install -r requirements.txt   或   uv pip install -r requirements.txt
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+torch==2.9.0
+numpy==2.5.3
+tiktoken==0.14.0          # GPT-2 BPE tokenizer
+huggingface_hub==2.2.0    # 下载官方权重
+safetensors==0.8.0        # 读取官方权重

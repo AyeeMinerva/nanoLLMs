@@ -1,1 +1,5 @@
 **/.dustbin/
+__pycache__/
+out/
+*.bin
+ENVIRONMENT.md
