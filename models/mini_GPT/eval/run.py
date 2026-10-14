@@ -8,8 +8,7 @@ import torch
 import torch.nn.functional as F
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))           # from src.* —— 学生实现
-sys.path.insert(0, str(ROOT.parent))    # from _eval_harness —— 共用运行壳
+sys.path.insert(0, str(ROOT))           # 从本任务目录导入 model / tokenizer / _eval_harness
 
 from _eval_harness import run_tests
 
@@ -25,7 +24,7 @@ def load_dataset_info():
 
 
 def test_tokenizer_roundtrip():
-    from src.tokenizer import BPETokenizer
+    from tokenizer import BPETokenizer
     tok_path = ROOT / "ckpt" / "tokenizer.json"
     if not tok_path.exists():
         return {"test": "tokenizer_roundtrip", "pass": None,
@@ -42,7 +41,7 @@ def test_tokenizer_roundtrip():
 
 
 def test_kv_cache_equivalence():
-    from src.model import load_for_eval
+    from model import load_for_eval
     ckpt = ROOT / "ckpt" / "best.pt"
     if not ckpt.exists():
         return {"test": "kv_cache_equivalence", "pass": None, "skip": "ckpt/best.pt 不存在"}
@@ -63,7 +62,7 @@ def test_kv_cache_equivalence():
 
 
 def test_perplexity_on_dev():
-    from src.model import load_for_eval
+    from model import load_for_eval
     ckpt = ROOT / "ckpt" / "best.pt"
     dev_path = ROOT / "data" / "dev.txt"
     info = load_dataset_info()
@@ -82,8 +81,8 @@ def test_perplexity_on_dev():
     ids = tok.encode(dev_path.read_text(encoding="utf-8"))[:4096]  # 自检只估量级，限 token 数控耗时
     nll, n_tok = 0.0, 0
     with torch.no_grad():
-        for i in range(0, max(1, len(ids) - 1), block):
-            window = ids[i:i + block + 1]
+        for i in range(0, max(1, len(ids) - 1), block - 1):
+            window = ids[i:i + block]
             if len(window) < 2:
                 break
             chunk = torch.tensor([window], dtype=torch.long)

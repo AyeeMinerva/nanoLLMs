@@ -1,4 +1,4 @@
-"""一个用于学习的字节级 BPE 分词器。"""
+"""BBPE 分词器"""
 
 import json
 from pathlib import Path

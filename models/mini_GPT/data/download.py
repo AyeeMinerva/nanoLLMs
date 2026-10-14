@@ -9,12 +9,11 @@
 import argparse
 import json
 import os
-import shutil
 import sys
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent
-ROOT = DATA_DIR.parent.parent  # llm-beginner 仓库根
+# 默认使用本目录的 poetryFromTang.txt；缺失时从任务原仓库下载。
 
 
 def write_dataset_info(dataset, ppl_threshold, extra=None):
@@ -44,14 +43,15 @@ def write_text_splits(text, dataset, ppl_threshold, dev_ratio=0.1):
 
 
 def get_poetry():
-    src = ROOT / "poetryFromTang.txt"
+    src = DATA_DIR / "poetryFromTang.txt"
     if not src.exists():
-        sys.exit(f"[错误] 找不到 {src}（应在仓库根）")
-    dst = DATA_DIR / "poetry.txt"
-    shutil.copy(src, dst)
+        from urllib.request import urlretrieve
+        url = "https://raw.githubusercontent.com/nndl/llm-beginner/master/poetryFromTang.txt"
+        print(f"下载唐诗语料: {url}")
+        urlretrieve(url, src)
     write_text_splits(src.read_text(encoding="utf-8"),
                       dataset="poetry", ppl_threshold=50)
-    print(f"已拷贝 {src.name} -> {dst.name}")
+    print(f"语料来源: {src}")
 
 
 def write_hf_text_split(split, out_path):

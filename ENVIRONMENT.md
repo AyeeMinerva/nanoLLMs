@@ -39,9 +39,8 @@ pip install -r requirements.txt
 uv:
 
 ```powershell
-uv venv --python 3.12
-.venv\Scripts\activate
-uv pip install -r requirements.txt
+uv sync --locked
+# torch 固定从 pyproject.toml 配置的 PyTorch cu128 源安装；无需另装 CUDA Toolkit。
 ```
 
 ## 验证
@@ -49,4 +48,5 @@ uv pip install -r requirements.txt
 ```powershell
 python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.is_bf16_supported())"
 # 期望输出: 2.9.0+cu128 True True
+# 当前机器也已验证 RTX 5070 Ti Laptop 上的 CUDA 矩阵乘法。
 ```
