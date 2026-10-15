@@ -1,5 +1,3 @@
-"""一个可学习的 decoder-only mini-GPT。"""
-
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -7,21 +5,11 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-
-@dataclass
-class ModelConfig:
-    vocab_size: int
-    block_size: int = 128
-    n_layer: int = 4
-    n_head: int = 4
-    n_embd: int = 128
-    dropout: float = 0.0
-    bias: bool = True
-    rope_base: float = 10000.0
-
-
 class RotaryEmbedding(nn.Module):
-    """把位置变成 Q/K 在各二维平面上的旋转。"""
+    """
+    RoPE (Rotary Position Embedding) 旋转位置编码 (二分折半)
+    把位置变成 Q/K 在各二维平面上的旋转。
+    """
 
     def __init__(self, head_size: int, max_seq_len: int, base: float = 10000.0):
         super().__init__()
@@ -54,10 +42,9 @@ class RotaryEmbedding(nn.Module):
         sin = self.sin[start_pos:start_pos + T].to(q.dtype)
         return self.apply_rope(q, cos, sin), self.apply_rope(k, cos, sin)
 
-
 class MLP(nn.Module):
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config):
         super().__init__()
         self.c_fc = nn.Linear(config.n_embd, 4 * config.n_embd, bias=config.bias)
         self.gelu = nn.GELU()
@@ -70,11 +57,12 @@ class MLP(nn.Module):
         x = self.c_proj(x)
         return self.dropout(x)
 
-
 class CausalSelfAttention(nn.Module):
-    """多头因果注意力；cache 中保存已经旋转过的 K 和 V。"""
+    """多头因果注意力；cache 中保存已经旋转过的 K 和 V。
+        RoPE+KV Cache
+    """
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config):
         super().__init__()
         assert config.n_embd % config.n_head == 0
         self.n_head = config.n_head
@@ -117,10 +105,9 @@ class CausalSelfAttention(nn.Module):
         y = self.c_proj(y)
         return self.resid_dropout(y), (k, v)
 
-
 class Block(nn.Module):
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config):
         super().__init__()
         self.ln_1 = nn.LayerNorm(config.n_embd, bias=config.bias)
         self.attn = CausalSelfAttention(config)
@@ -133,10 +120,19 @@ class Block(nn.Module):
         x = x + self.mlp(self.ln_2(x))
         return x, new_cache
 
+    @staticmethod
+    def _init_weights(module):
+        if isinstance(module, nn.Linear):
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+
 
 class MiniGPT(nn.Module):
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config):
         super().__init__()
         self.config = config
         self.block_size = config.block_size
@@ -177,7 +173,8 @@ class MiniGPT(nn.Module):
             f"position {start_pos + T} exceeds block_size {self.block_size}"
         )
 
-        x = self.transformer.drop(self.transformer.wte(idx))
+        x = self.transformer.wte(idx)
+        x = self.transformer.drop(x)
         new_cache = []
         for layer, block in enumerate(self.transformer.h):
             layer_cache = None if kv_cache is None else kv_cache[layer]
@@ -197,10 +194,36 @@ class MiniGPT(nn.Module):
             return logits, new_cache
         return logits
 
+    @staticmethod
+    def sample_next_token(logits, top_k=0, top_p=1.0, temperature=1.0):
+        """logits: (B, vocab_size)，返回 (B,) 个 token ID。"""
+        if temperature < 0:
+            raise ValueError("temperature must be >= 0")
+        if top_k < 0 or not 0 < top_p <= 1:
+            raise ValueError("top_k must be >= 0 and top_p must be in (0, 1]")
+        if temperature == 0:
+            return logits.argmax(dim=-1)  # greedy，无需除以 0
+
+        logits = logits / temperature
+        if top_k > 0:
+            cutoff = logits.topk(min(top_k, logits.size(-1)), dim=-1).values[:, -1:]
+            logits = logits.masked_fill(logits < cutoff, float("-inf"))
+
+        if top_p < 1:
+            sorted_logits, sorted_idx = logits.sort(dim=-1, descending=True)
+            sorted_probs = sorted_logits.softmax(dim=-1)
+            # 超过阈值的词要删掉，但保留第一个越过阈值的词及概率最高的词。
+            remove = sorted_probs.cumsum(dim=-1) - sorted_probs > top_p
+            remove[:, 0] = False
+            sorted_logits = sorted_logits.masked_fill(remove, float("-inf"))
+            logits = torch.empty_like(logits).scatter_(1, sorted_idx, sorted_logits)
+
+        probs = logits.softmax(dim=-1)  # 截断之后重新归一化
+        return torch.multinomial(probs, num_samples=1).squeeze(-1)
+
     @torch.no_grad()
     def generate(self, prompt_ids, max_new_tokens, top_k=0, top_p=1.0, temperature=1.0):
         """使用 KV cache 自回归生成，返回形状为 ``(B, T + new_tokens)`` 的 ID。"""
-        from sampling import sample_next_token
 
         if max_new_tokens < 0:
             raise ValueError("max_new_tokens must be >= 0")
@@ -215,11 +238,11 @@ class MiniGPT(nn.Module):
         ids = prompt_ids.to(device)
         if max_new_tokens == 0:
             return ids
-        context = ids[:, -self.block_size:]
-        logits, cache = self(context, return_cache=True)
+        context = ids[:, -self.block_size:] #截断到最大上下文长度
+        logits, cache = self(context, return_cache=True)#首次推理
 
         for step in range(max_new_tokens):
-            next_id = sample_next_token(
+            next_id = self.sample_next_token(
                 logits[:, -1],
                 top_k=top_k,
                 top_p=top_p,
@@ -237,20 +260,17 @@ class MiniGPT(nn.Module):
         return ids
 
 
-def load_for_eval(ckpt_path):
-    """读取训练脚本保存的 checkpoint，并返回 ``(model, tokenizer)``。"""
-    from tokenizer import BPETokenizer
+# def load_for_eval(ckpt_path):
+#     """读取训练脚本保存的 checkpoint，并返回 ``(model, tokenizer)``。"""
+#     from tokenizer import BPETokenizer
 
-    ckpt_path = Path(ckpt_path)
-    checkpoint = torch.load(ckpt_path, map_location="cpu")
-    config = ModelConfig(**checkpoint["config"])
-    model = MiniGPT(config)
-    model.load_state_dict(checkpoint["model"])
+#     ckpt_path = Path(ckpt_path)
+#     checkpoint = torch.load(ckpt_path, map_location="cpu")
+#     config = ModelConfig(**checkpoint["config"])
+#     model = MiniGPT(config)
+#     model.load_state_dict(checkpoint["model"])
 
-    tokenizer_path = ckpt_path.parent / "tokenizer.json"
-    tokenizer = BPETokenizer.from_pretrained(tokenizer_path)
-    model.eval()
-    return model, tokenizer
-
-
-__all__ = ["ModelConfig", "MiniGPT", "load_for_eval"]
+#     tokenizer_path = ckpt_path.parent / "tokenizer.json"
+#     tokenizer = BPETokenizer.from_pretrained(tokenizer_path)
+#     model.eval()
+#     return model, tokenizer

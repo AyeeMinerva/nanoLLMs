@@ -7,3 +7,6 @@ ENVIRONMENT.md、
 **/.venv
 **/.obsidian
 **/.MyNotes
+nul
+**/ckpt
+**/results

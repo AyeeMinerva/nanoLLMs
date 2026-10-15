@@ -19,7 +19,7 @@ import torch
 
 from config import GPT2Config
 from model import GPT2
-from train_config import TrainConfig
+from config import TrainConfig
 
 
 def get_batch(data_dir, split, batch_size, block_size, device):
