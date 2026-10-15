@@ -1,5 +1,7 @@
 # GPT-2
 
+本项目是直接基于[nanoGPT: karpathy/nanoGPT](https://github.com/karpathy/nanoGPT)所进行的复现和基于个人理解的修改。
+
 GPT-2 的最简实现: 单卡训练 / 推理 / 加载官方权重。
 
 | 文件 | 内容 | 文档 |

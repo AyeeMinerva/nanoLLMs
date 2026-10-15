@@ -17,7 +17,7 @@ def main():
     parser.add_argument("--tokens", type=int, default=80)
     parser.add_argument("--seed", type=int, default=1337)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
-    parser.add_argument("--output", type=Path, default=ROOT / "notes" / "samples.md")
+    parser.add_argument("--output", type=Path, default=ROOT / "results" / "samples.md")
     args = parser.parse_args()
 
     if hasattr(sys.stdout, "reconfigure"):

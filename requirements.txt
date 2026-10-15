@@ -1,9 +1,13 @@
-# Python 3.12 · CUDA 12.8 (RTX 50 系列需要 cu128)
-# pip install -r requirements.txt   或   uv pip install -r requirements.txt
+# Python 3.12 · PyTorch CUDA 12.8
+# uv 项目推荐：uv sync --locked（使用 pyproject.toml 和 uv.lock）
+# 此文件列出与 pyproject.toml 一致的直接依赖，供 pip 兼容使用。
+# pip install -r requirements.txt
+# uv pip install --index-strategy unsafe-best-match -r requirements.txt
 --extra-index-url https://download.pytorch.org/whl/cu128
 
-torch==2.9.0
+torch==2.9.0+cu128
+matplotlib==3.11.2       # 训练曲线绘图
 numpy==2.5.3
 tiktoken==0.14.0          # GPT-2 BPE tokenizer
-huggingface_hub==2.2.0    # 下载官方权重
+huggingface-hub==2.2.0    # 下载官方权重
 safetensors==0.8.0        # 读取官方权重

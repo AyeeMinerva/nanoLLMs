@@ -6,6 +6,6 @@ data/*.json
 ckpt/
 src/__pycache__/
 eval/__pycache__/
-eval/result.json
 *.pyc
 .venv/
+results/

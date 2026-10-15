@@ -149,7 +149,9 @@ def main():
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
 
-    (ckpt_dir / "train_log.json").write_text(
+    results_dir = ROOT / "results"
+    results_dir.mkdir(exist_ok=True)
+    (results_dir / "train_log.json").write_text(
         json.dumps(log, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print(f"best checkpoint: {ckpt_dir / 'best.pt'}")

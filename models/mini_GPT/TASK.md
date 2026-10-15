@@ -22,7 +22,7 @@
 | | 内容 |
 |---|---|
 | **给你** | 三档语料（唐诗 ~49KB quick-start / TinyStories / SkyPile 子集，`data/download.py` 自动准备）/ PyTorch 2.7+ / 唐诗档 CPU 即可，TinyStories CPU 可训但慢、建议 GPU，SkyPile 子集建议 GPU |
-| **交付** | 1. `ckpt/tokenizer.json`（训练好的 BPE 词表） 2. `ckpt/best.pt`（预训练模型 state_dict） 3. 几段生成样例（不同采样策略对比） 4. `eval/result.json`（自检结果） 5. 一段 200–500 字实验观察 |
+| **交付** | 1. `ckpt/tokenizer.json`（训练好的 BPE 词表） 2. `ckpt/best.pt`（预训练模型 state_dict） 3. 几段生成样例（不同采样策略对比） 4. `results/result.json`（自检结果） 5. 一段 200–500 字实验观察 |
 
 ## Definition of Done
 
@@ -141,7 +141,7 @@ python eval/run.py
 
 > `perplexity_on_dev` 读取 `data/dev.txt`（最多取前 4096 个词元），按模型上下文长度非重叠分块累加 NLL 后求困惑度——窗口取 `MiniGPT.block_size` 或 `max_seq_len`，取不到则默认 256。因此小上下文模型也能跑通、不会越界或 OOM；建议给 `MiniGPT` 暴露 `block_size` 或 `max_seq_len` 属性，让自检按你的真实训练长度切窗。
 
-结果写入 `eval/result.json`，提交时附上。
+结果写入 `results/result.json`，提交时附上。
 
 ## AI Tutor 反馈
 
@@ -160,7 +160,7 @@ python eval/run.py
 到 [nndl-discussion](https://github.com/nndl/nndl-discussion/discussions) 「llm-beginner 实践成果」分类发帖，附：
 
 1. 你的 fork 仓库链接
-2. `eval/result.json` 内容（贴文本即可）
+2. `results/result.json` 内容（贴文本即可）
 3. DoD checklist 勾选状态
 4. 几段生成样例（不同采样策略对比）
 5. 200-500 字实验观察：你做了哪些消融、看到了什么有意思的现象（如涌现、外推差异）

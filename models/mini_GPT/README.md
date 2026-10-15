@@ -1,5 +1,10 @@
 # mini-GPT：复现流程
 
+本项目是直接基于[llm-beginner: nndl/llm-beginner](https://github.com/nndl/llm-beginner)的任务2所进行的复现和基于个人理解的修改。
+此文档部分由人工指导AI生成故可能存在错漏或过时。
+
+从零训练 TinyStories、选择模型规模及计算 M/B 参数量，见 [TinyStories 训练指南](notes/tinystories.md)。
+
 本目录的代码按当前仓库结构组织，不使用原任务示例中的 `src/` 目录：
 
 ```text
@@ -15,6 +20,7 @@ models/mini_GPT/
 ├── generate.py             # 生成四组样例
 ├── eval/run.py             # 当前目录结构下的原任务评测逻辑
 ├── ckpt/                  # 运行后生成 tokenizer.json / best.pt
+├── results/               # 运行结果：训练日志、评测、生成文本、曲线（已忽略）
 └── notes/model.md
 ```
 
@@ -33,7 +39,7 @@ python data/download.py --dataset poetry
 - `data/dev.txt`
 - `data/dataset_info.json`
 
-当前唐诗 quick-start 的评测阈值是困惑度 `< 50`。
+当前唐诗 quick-start 的评测阈值是困惑度 `< 50`。训练后运行 `python plot_training.py`，曲线会写入 `results/train_curve.png`。
 
 ## 2. 检查 CUDA
 
@@ -83,7 +89,7 @@ python train.py --steps 1500 --eval-interval 100 --eval-steps 10 --batch-size 32
 
 - `ckpt/tokenizer.json`
 - `ckpt/best.pt`
-- `ckpt/train_log.json`
+- `results/train_log.json`
 
 若要完全重新训练，删除 `ckpt/` 后重跑：
 
@@ -105,7 +111,7 @@ Remove-Item -Recurse -Force ckpt
 python eval/run.py
 ```
 
-结果写入 `eval/result.json`。一次成功的唐诗结果示例：
+结果写入 `results/result.json`。一次成功的唐诗结果示例：
 
 ```json
 [
@@ -121,9 +127,11 @@ python eval/run.py
 
 ```bash
 python generate.py \
-  --prompt "春眠不觉晓，" \
+  --prompt "空，" \
   --tokens 80 \
   --seed 1337
+
+python generate.py --prompt "空山新雨" --tokens 120 --seed 1337
 ```
 
 脚本会依次展示：
@@ -133,7 +141,7 @@ python generate.py \
 - `top-p=0.9`：按累计概率截断后采样
 - `temperature=0.7`：改变分布尖锐程度后采样
 
-结果同时写入 `notes/samples.md`。生成使用 KV cache；当缓存到达 `block_size` 时，代码自动退回到最近上下文重新预填充。
+结果同时写入 `results/samples.md`。生成使用 KV cache；当缓存到达 `block_size` 时，代码自动退回到最近上下文重新预填充。
 
 ## 6. 从头到尾的一组命令
 
@@ -142,6 +150,7 @@ cd models/mini_GPT
 python data/download.py --dataset poetry
 python train.py --steps 1500 --eval-interval 100 --eval-steps 10 --batch-size 32 --block-size 128 --vocab-size 320 --n-layer 4 --n-head 4 --n-embd 128 --dropout 0.15 --lr 0.0005 --device cpu
 python eval/run.py
+python plot_training.py
 python generate.py --prompt "春眠不觉晓，" --tokens 80 --seed 1337
 ```
 
