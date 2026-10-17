@@ -1,0 +1,10 @@
+{
+  "source": "F:\\Projects\\nanoLLMs\\data\\tinystories\\tinystories-validation.parquet",
+  "source_size": 9829672,
+  "source_mtime_ns": 1791818095824695400,
+  "tokenizer_sha256": "1be2d580e428c31cf90155244c38d2abaf90dc9d878454da80965cf63fbb5fba",
+  "text_column": "text",
+  "eos_token_id": 0,
+  "dtype": "uint32",
+  "format_version": 1
+}
