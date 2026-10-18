@@ -6,7 +6,8 @@
 - `config.py`：数据路径、tokenizer 设置、模型结构及训练参数；
 - `tokenizer.py`：Hugging Face `tokenizers` 的 byte-level BPE 薄封装和 tokenizer 训练入口；
 - `train.py`：编码/缓存数据、训练模型、验证和保存 checkpoint；
-- `plot.py`：读取训练日志并绘制 train/validation loss。
+- `plot.py`：读取训练日志并绘制 train/validation loss；
+- `chat.py`：加载 checkpoint，进行单次文本续写或交互式生成。
 
 数据和产物路径都由 `config.py` 基于模块位置定义，不依赖当前工作目录。下面的命令示例从仓库根目录执行。
 
@@ -107,7 +108,49 @@ python models/mini_GPT/plot.py
 models/mini_GPT/results/loss_curve.png
 ```
 
-## 推理示例
+## 推理与交互聊天
+
+推荐使用 `chat.py`，它会从 `config.py` 中读取默认 checkpoint、tokenizer 和采样设置。
+
+### 单次文本续写
+
+```bash
+python models/mini_GPT/chat.py --prompt "Once upon a time"
+```
+
+### 交互式生成
+
+不提供 `--prompt` 时进入交互模式：
+
+```bash
+python models/mini_GPT/chat.py
+```
+
+输入 `/exit` 或 `/quit` 退出。也可以临时覆盖采样参数：
+
+```bash
+python models/mini_GPT/chat.py \
+    --max-new-tokens 160 \
+    --temperature 0.8 \
+    --top-k 50 \
+    --top-p 0.9
+```
+
+可用参数包括：
+
+- `--checkpoint`：覆盖默认 checkpoint 路径；
+- `--tokenizer`：覆盖默认 `tokenizer.json` 路径；
+- `--device`：使用 `auto`、`cpu` 或具体 PyTorch 设备；
+- `--max-new-tokens`：最多生成的 token 数；
+- `--temperature`：温度为 `0` 时使用 greedy decoding；
+- `--top-k`：限制采样候选 token 数，`0` 表示不启用；
+- `--top-p`：nucleus sampling 阈值。
+
+当前 MiniGPT 是在 TinyStories 上进行 next-token prediction 的基础语言模型，并没有经过 instruction tuning 或对话数据微调。因此交互模式只是把多轮文本拼接成 prompt，不能保证像 ChatGPT 一样遵循指令；它更适合观察模型的文本续写能力。
+
+推理脚本会校验 checkpoint 中记录的 tokenizer SHA-256 和词表大小，避免误用不匹配的 tokenizer。
+
+### Python API 示例
 
 从仓库根目录运行以下 Python 代码，加载验证集最佳 checkpoint 并生成文本：
 
